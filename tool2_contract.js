@@ -57,21 +57,6 @@ function analyzeContract(contract) {
 
                     if (func == "draw") {
 
-                        neb.api.getEventsByHash({ hash: tx.hash })
-                            .then((events) => {
-                                _.each(events.events, (event) => {
-                                    var draws = JSON.parse(event.data).Draw;
-                                    if (draws != undefined) {
-                                        if (havecard[draws.from] == undefined) havecard[draws.from] = [];
-                                        havecard[draws.from] = havecard[draws.from].concat(draws.tokens);
-                                    }
-                                });
-                            })
-                            .catch((e) => {
-                                console.log("error");
-                                console.log(e);
-                            });
-
                     }
 
                     txArr.push(_tx);
@@ -106,76 +91,7 @@ function analyzeContract(contract) {
             arrs = arrs.sort((a, b) => {
                 return b.balance - a.balance;
             });
-
-            // console.log(havecard);
-
-            for (let keys in havecard) {
-
-                let values = havecard[keys];
-
-                // neb.api.call({
-                //     chainID: 1,
-                //     from: "n1SYTt7eVMa6TuJrNg2DbmayfZAoyePYvTo",
-                //     to: "n1gDfiiQLEBu95xDWHGxNi4qToyXjD2vE4D",
-                //     value: 0,
-                //     nonce: 12,
-                //     gasPrice: 1,
-                //     gasLimit: 1,
-                //     contract: {
-                //         function: "getCardsByAddress",
-                //         args: JSON.stringify([keys])
-                //     }
-                // }).then(function (tx) {
-                //     console.log(tx)
-                //     havecardid[keys] = parseInt(tx.result);
-                // }).catch((e) => {
-                //     console.log(e);
-                //     // s(value);
-                // });
-
-                _.each(values, (value) => {
-
-                    var lis = (tx) => {
-                        console.log(tx)
-                        havecardid[keys] = parseInt(tx.result);
-                    }
-                    // nebPay.simulateCall(
-                    //     "n1gDfiiQLEBu95xDWHGxNi4qToyXjD2vE4D", 
-                    //     "0", 
-                    //     "getHeroIdByTokenId", 
-                    //     JSON.stringify([value]),
-                    //     {    //使用nebpay的call接口去调用合约,
-                    //         callback: callbacks,
-                    //         listener: lis(e)
-                    //     }
-                    // );
-
-                    var s = (value) => {
-
-                        neb.api.call({
-                            chainID: 1,
-                            from: "n1SYTt7eVMa6TuJrNg2DbmayfZAoyePYvTo",
-                            to: "n1gDfiiQLEBu95xDWHGxNi4qToyXjD2vE4D",
-                            value: 0,
-                            nonce: 12,
-                            gasPrice: 1000000,
-                            gasLimit: 1000000,
-                            contract: {
-                                function: "getHeroIdByTokenId",
-                                args: JSON.stringify([value])
-                            }
-                        }).then(function (tx) {
-                            // console.log(tx)
-                            havecardid[keys] = parseInt(tx.result);
-                        }).catch((e) => {
-                            console.log("error in call" + value);
-                            s(value);
-                        });
-                    }
-                    s(value);
-                })
-
-            }
+            
             fetchAccountInfo(arrs);
 
         })
@@ -315,7 +231,95 @@ function fetchAccountInfo(accounts) {
     })
 }
 
+function cardtoid(havecardid, havecard, keys) {//not use
+    // console.log(havecard);
 
+    for (let keys in havecard) {
+
+        let values = havecard[keys];
+
+        // neb.api.call({
+        //     chainID: 1,
+        //     from: "n1SYTt7eVMa6TuJrNg2DbmayfZAoyePYvTo",
+        //     to: "n1gDfiiQLEBu95xDWHGxNi4qToyXjD2vE4D",
+        //     value: 0,
+        //     nonce: 12,
+        //     gasPrice: 1,
+        //     gasLimit: 1,
+        //     contract: {
+        //         function: "getCardsByAddress",
+        //         args: JSON.stringify([keys])
+        //     }
+        // }).then(function (tx) {
+        //     console.log(tx)
+        //     havecardid[keys] = parseInt(tx.result);
+        // }).catch((e) => {
+        //     console.log(e);
+        //     // s(value);
+        // });
+
+        _.each(values, (value) => {
+
+            var lis = (tx) => {
+                console.log(tx)
+                havecardid[keys] = parseInt(tx.result);
+            }
+            // nebPay.simulateCall(
+            //     "n1gDfiiQLEBu95xDWHGxNi4qToyXjD2vE4D", 
+            //     "0", 
+            //     "getHeroIdByTokenId", 
+            //     JSON.stringify([value]),
+            //     {    //使用nebpay的call接口去调用合约,
+            //         callback: callbacks,
+            //         listener: lis(e)
+            //     }
+            // );
+
+            var s = (value) => {
+
+                neb.api.call({
+                    chainID: 1,
+                    from: "n1SYTt7eVMa6TuJrNg2DbmayfZAoyePYvTo",
+                    to: "n1gDfiiQLEBu95xDWHGxNi4qToyXjD2vE4D",
+                    value: 0,
+                    nonce: 12,
+                    gasPrice: 1000000,
+                    gasLimit: 1000000,
+                    contract: {
+                        function: "getHeroIdByTokenId",
+                        args: JSON.stringify([value])
+                    }
+                }).then(function (tx) {
+                    // console.log(tx)
+                    havecardid[keys] = parseInt(tx.result);
+                }).catch((e) => {
+                    console.log("error in call" + value);
+                    s(value);
+                });
+            }
+            s(value);
+        })
+
+    }
+}
+
+function sethavecard(havecard, tx) {//not use
+    console.log(tx);
+    neb.api.getEventsByHash({ hash: tx.hash })
+        .then((events) => {
+            _.each(events.events, (event) => {
+                var draws = JSON.parse(event.data).Draw;
+                if (draws != undefined) {
+                    if (havecard[draws.from] == undefined) havecard[draws.from] = [];
+                    havecard[draws.from] = havecard[draws.from].concat(draws.tokens);
+                }
+            });
+        })
+        .catch((e) => {
+            console.log("error");
+            console.log(e);
+        });
+}
 var contract = process.argv[2];
 
 if (!contract) {
