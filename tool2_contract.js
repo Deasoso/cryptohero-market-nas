@@ -33,8 +33,9 @@ function analyzeContract(contract) {
         var totalPage = res.body.data.totalPage;
         var txnCnt = res.body.data.txnCnt;
         var txArr = [];
-        var havecard = {};
-        var havecardid = {};
+        // var havecard = {};
+        // var havecardid = {};
+        var cardprices = [];
         var arr = _.fill(Array(totalPage), 1);
         var index = 0;
         console.log("合约:", contract, "交易页数:", totalPage, "交易记录:", txnCnt);
@@ -53,10 +54,20 @@ function analyzeContract(contract) {
                         balance: tx.from.balance / 10 ** 18
                     }
 
-                    var func = JSON.parse(tx.data).Function;
+                    var txdata = JSON.parse(tx.data);
+                    
+                    var func = txdata.Function;
+                    var funcargs = txdata.Args;
 
-                    if (func == "draw") {
-
+                    if (func == "setTokenPrice") {
+                        console.log(txdata);
+                        try{
+                            funcargs = JSON.parse(funcargs);
+                        }catch(e){
+                            console.log("error in funcargs");
+                            funcargs = [0,0];
+                        }
+                        cardprices = setcardprice(cardprices, tx.from.hash, funcargs);
                     }
 
                     txArr.push(_tx);
@@ -91,9 +102,10 @@ function analyzeContract(contract) {
             arrs = arrs.sort((a, b) => {
                 return b.balance - a.balance;
             });
-            
+
             fetchAccountInfo(arrs);
 
+            console.log(cardprices);
         })
 
     });
@@ -320,6 +332,18 @@ function sethavecard(havecard, tx) {//not use
             console.log(e);
         });
 }
+
+function setcardprice(cardprices, from, funcargs){
+    var id = funcargs[0];
+    var value = funcargs[1];
+    cardprices.push({
+        "from": from,
+        "tokenid": id,
+        "value": value
+    })
+    return cardprices;
+}
+
 var contract = process.argv[2];
 
 if (!contract) {
